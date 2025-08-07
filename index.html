@@ -194,6 +194,22 @@ h1 {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   min-width: clamp(40px, 6vw, 80px);
   min-height: clamp(35px, 5vw, 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.5vw, 4px);
+}
+
+.avaliacoes button .emoji {
+  font-size: clamp(16px, 2.5vw, 24px);
+  line-height: 1;
+}
+
+.avaliacoes button .label {
+  font-size: clamp(8px, 1.2vw, 12px);
+  line-height: 1;
+  font-weight: 500;
 }
 
 .avaliacoes button:hover {
@@ -251,6 +267,15 @@ h1 {
     padding: clamp(4px, 1vw, 10px) clamp(6px, 1.5vw, 12px);
     min-width: clamp(30px, 4vw, 50px);
     min-height: clamp(25px, 4vw, 40px);
+    gap: clamp(1px, 0.3vw, 2px);
+  }
+  
+  .avaliacoes button .emoji {
+    font-size: clamp(12px, 2vw, 18px);
+  }
+  
+  .avaliacoes button .label {
+    font-size: clamp(6px, 1vw, 10px);
   }
 }
 
@@ -448,9 +473,18 @@ function renderizarFuncionarias() {
       <img src="${f.foto}" alt="${f.nome}">
       <h2>${f.nome}</h2>
       <div class="avaliacoes">
-        <button onclick="avaliar(${i}, 'Boa', event)">😊</button>
-        <button onclick="avaliar(${i}, 'Neutra', event)">😐</button>
-        <button onclick="avaliar(${i}, 'Ruim', event)">😞</button>
+        <button onclick="avaliar(${i}, 'Boa', event)">
+          <span class="emoji">😊</span>
+          <span class="label">Boa</span>
+        </button>
+        <button onclick="avaliar(${i}, 'Neutra', event)">
+          <span class="emoji">😐</span>
+          <span class="label">Neutra</span>
+        </button>
+        <button onclick="avaliar(${i}, 'Ruim', event)">
+          <span class="emoji">😞</span>
+          <span class="label">Ruim</span>
+        </button>
       </div>
     `;
     container.appendChild(div);
@@ -520,9 +554,12 @@ function piscarBotao(index, tipo) {
   const div = document.getElementsByClassName('funcionaria')[index];
   const botoes = div.querySelectorAll('button');
   botoes.forEach((btn) => {
-    if (btn.innerText.includes('😊') && tipo === 'Boa' ||
-        btn.innerText.includes('😐') && tipo === 'Neutra' ||
-        btn.innerText.includes('😞') && tipo === 'Ruim') {
+    const emoji = btn.querySelector('.emoji');
+    if (emoji && (
+        (emoji.textContent.includes('😊') && tipo === 'Boa') ||
+        (emoji.textContent.includes('😐') && tipo === 'Neutra') ||
+        (emoji.textContent.includes('😞') && tipo === 'Ruim')
+    )) {
       btn.style.backgroundColor = '#2ecc71';
       setTimeout(() => {
         btn.style.backgroundColor = '';
