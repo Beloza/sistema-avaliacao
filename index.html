@@ -22,6 +22,7 @@ body {
   padding: 20px;
   padding-top: 80px;
   color: #333;
+  overflow-x: hidden;
 }
 
 h1 {
@@ -31,65 +32,149 @@ h1 {
 }
 
 .container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 24px;
+  display: grid;
+  gap: clamp(8px, 2vw, 24px);
   margin-top: 20px;
   width: 100%;
-  max-width: 1200px;
+  height: calc(100vh - 140px);
+  max-width: 100vw;
+  padding: 0 10px;
   position: relative;
+  justify-content: center;
+  align-content: center;
+  
+  /* Grid responsivo baseado no número de itens */
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, calc(100vw / 6)), 1fr));
+  grid-auto-rows: minmax(200px, 1fr);
+  
+  /* Ajustes específicos para diferentes quantidades */
+  &:has(.funcionaria:nth-child(5):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, calc(100vw / 4)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(6):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(250px, calc(100vw / 4)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(7):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, calc(100vw / 5)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(8):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(200px, calc(100vw / 5)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(9):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(180px, calc(100vw / 5)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(10):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(170px, calc(100vw / 6)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(11):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(160px, calc(100vw / 6)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(12):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(150px, calc(100vw / 7)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(13):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(140px, calc(100vw / 7)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(14):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(135px, calc(100vw / 8)), 1fr));
+  }
+  
+  &:has(.funcionaria:nth-child(15):last-child) {
+    grid-template-columns: repeat(auto-fit, minmax(min(130px, calc(100vw / 8)), 1fr));
+  }
+}
+
+/* Fallback para navegadores que não suportam :has() */
+@supports not selector(:has(*)) {
+  .container {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  /* Classes dinâmicas para controle via JS */
+  .container.items-5 { grid-template-columns: repeat(auto-fit, minmax(min(280px, calc(100vw / 4)), 1fr)); }
+  .container.items-6 { grid-template-columns: repeat(auto-fit, minmax(min(250px, calc(100vw / 4)), 1fr)); }
+  .container.items-7 { grid-template-columns: repeat(auto-fit, minmax(min(220px, calc(100vw / 5)), 1fr)); }
+  .container.items-8 { grid-template-columns: repeat(auto-fit, minmax(min(200px, calc(100vw / 5)), 1fr)); }
+  .container.items-9 { grid-template-columns: repeat(auto-fit, minmax(min(180px, calc(100vw / 5)), 1fr)); }
+  .container.items-10 { grid-template-columns: repeat(auto-fit, minmax(min(170px, calc(100vw / 6)), 1fr)); }
+  .container.items-11 { grid-template-columns: repeat(auto-fit, minmax(min(160px, calc(100vw / 6)), 1fr)); }
+  .container.items-12 { grid-template-columns: repeat(auto-fit, minmax(min(150px, calc(100vw / 7)), 1fr)); }
+  .container.items-13 { grid-template-columns: repeat(auto-fit, minmax(min(140px, calc(100vw / 7)), 1fr)); }
+  .container.items-14 { grid-template-columns: repeat(auto-fit, minmax(min(135px, calc(100vw / 8)), 1fr)); }
+  .container.items-15 { grid-template-columns: repeat(auto-fit, minmax(min(130px, calc(100vw / 8)), 1fr)); }
 }
 
 .funcionaria {
   background-color: #fff;
-  border-radius: 16px;
+  border-radius: clamp(8px, 1.5vw, 16px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  padding: 16px;
+  padding: clamp(8px, 1.5vw, 16px);
   text-align: center;
-  width: 220px;
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+  height: 100%;
 }
 
 .funcionaria:hover {
-  transform: translateY(-5px);
+  transform: translateY(-2px);
 }
 
 .funcionaria.blurred {
   filter: blur(3px);
   opacity: 0.4;
-  transform: scale(0.9);
+  transform: scale(0.95);
 }
 
 .funcionaria.selected {
-  transform: scale(1.2);
+  transform: scale(1.05);
   z-index: 10;
   box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 
 .funcionaria img {
   width: 100%;
-  height: 220px;
+  flex: 1;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: clamp(6px, 1vw, 12px);
+  min-height: 0;
+  max-height: calc(100% - 60px);
 }
 
 .funcionaria h2 {
-  font-size: 18px;
-  margin: 10px 0;
+  font-size: clamp(10px, 1.8vw, 18px);
+  margin: clamp(4px, 1vw, 10px) 0;
   color: #34495e;
+  line-height: 1.2;
+  flex-shrink: 0;
+  height: auto;
+  min-height: clamp(20px, 3vw, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .avaliacoes {
   display: none;
   position: absolute;
-  right: -120px;
+  right: -10px;
   top: 50%;
   transform: translateY(-50%);
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(6px, 1vw, 12px);
   z-index: 15;
 }
 
@@ -98,17 +183,17 @@ h1 {
 }
 
 .avaliacoes button {
-  padding: 15px 20px;
+  padding: clamp(8px, 1.5vw, 15px) clamp(10px, 2vw, 20px);
   border: none;
-  border-radius: 12px;
+  border-radius: clamp(6px, 1vw, 12px);
   cursor: pointer;
   background-color: #3498db;
   color: white;
-  font-size: 24px;
+  font-size: clamp(14px, 2.5vw, 24px);
   transition: all 0.2s ease;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  min-width: 80px;
-  min-height: 60px;
+  min-width: clamp(40px, 6vw, 80px);
+  min-height: clamp(35px, 5vw, 60px);
 }
 
 .avaliacoes button:hover {
@@ -136,76 +221,73 @@ h1 {
   display: block;
 }
 
-/* Responsividade para dispositivos móveis */
-@media (max-width: 768px) {
+/* Orientação paisagem - ajustes especiais */
+@media (orientation: landscape) and (max-height: 600px) {
+  body {
+    padding-top: 60px;
+  }
+  
   .container {
-    gap: 8px;
-    padding: 0 10px;
-    max-width: 100%;
-    justify-content: space-evenly;
+    height: calc(100vh - 100px);
+    gap: clamp(4px, 1vw, 12px);
   }
   
   .funcionaria {
-    width: calc(50% - 8px);
-    max-width: 150px;
-    padding: 8px;
-  }
-  
-  .funcionaria img {
-    height: 120px;
+    padding: clamp(4px, 1vw, 12px);
   }
   
   .funcionaria h2 {
-    font-size: 14px;
-    margin: 6px 0;
-  }
-  
-  .funcionaria.selected {
-    transform: scale(1.05);
+    font-size: clamp(8px, 1.5vw, 14px);
+    margin: clamp(2px, 0.5vw, 6px) 0;
+    min-height: clamp(16px, 2.5vw, 30px);
   }
   
   .avaliacoes {
+    gap: clamp(3px, 0.8vw, 8px);
+  }
+  
+  .avaliacoes button {
+    font-size: clamp(12px, 2vw, 18px);
+    padding: clamp(4px, 1vw, 10px) clamp(6px, 1.5vw, 12px);
+    min-width: clamp(30px, 4vw, 50px);
+    min-height: clamp(25px, 4vw, 40px);
+  }
+}
+
+/* Dispositivos móveis em retrato */
+@media (orientation: portrait) and (max-width: 768px) {
+  .container {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+    gap: clamp(6px, 1.5vw, 12px);
+    height: calc(100vh - 120px);
+  }
+  
+  .funcionaria.selected .avaliacoes {
     position: static;
     transform: none;
     margin-top: 8px;
     flex-direction: row;
     justify-content: center;
     gap: 6px;
-  }
-  
-  .avaliacoes button {
-    min-width: 40px;
-    min-height: 40px;
-    font-size: 16px;
-    padding: 8px;
+    right: auto;
+    top: auto;
   }
 }
 
-/* Para telas muito pequenas (smartphones pequenos) */
+/* Telas muito pequenas */
 @media (max-width: 480px) {
-  .funcionaria {
-    width: calc(33.33% - 6px);
-    max-width: 110px;
-    padding: 6px;
-  }
-  
-  .funcionaria img {
-    height: 90px;
+  .container {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
+    gap: clamp(4px, 1vw, 8px);
   }
   
   .funcionaria h2 {
-    font-size: 12px;
-    margin: 4px 0;
-  }
-  
-  .avaliacoes button {
-    min-width: 35px;
-    min-height: 35px;
-    font-size: 14px;
-    padding: 6px;
+    font-size: clamp(8px, 2vw, 12px);
+    min-height: clamp(14px, 2.5vw, 20px);
   }
 }
 
+/* Estilos administrativos - NÃO MODIFICAR */
 .admin-panel {
   display: none;
   margin-top: 30px;
@@ -336,8 +418,12 @@ button:hover {
 let funcionarias = JSON.parse(localStorage.getItem('funcionarias')) || [];
 let avaliacoes = JSON.parse(localStorage.getItem('avaliacoes')) || {};
 let modoADM = false;
-let senhaADM = localStorage.getItem('senhaADM') || 'admin123';
 let funcionariaSelecionada = null;
+
+// Função para obter a senha atual
+function obterSenhaAtual() {
+  return localStorage.getItem('senhaADM') || '1234';
+}
 
 function salvarDados() {
   localStorage.setItem('funcionarias', JSON.stringify(funcionarias));
@@ -347,6 +433,13 @@ function salvarDados() {
 function renderizarFuncionarias() {
   const container = document.getElementById('funcionariasContainer');
   container.innerHTML = '';
+  
+  // Adicionar classe para fallback de navegadores que não suportam :has()
+  container.className = 'container';
+  if (funcionarias.length <= 15) {
+    container.classList.add(`items-${funcionarias.length}`);
+  }
+  
   funcionarias.forEach((f, i) => {
     const div = document.createElement('div');
     div.className = 'funcionaria';
@@ -443,25 +536,37 @@ function alternarModoADM() {
   
   if (!modoADM) {
     // Tentando entrar no modo ADM
-    const senha = prompt('Digite a senha do modo ADM:');
+    const senhaDigitada = prompt('Digite a senha do modo ADM:');
     
-    // Debug - para verificar as senhas (você pode remover depois)
-    console.log('Senha digitada:', senha);
-    console.log('Senha esperada:', senhaADM);
+    if (senhaDigitada === null) {
+      return; // Usuário cancelou
+    }
     
-    if (senha && senha.trim() === senhaADM) {
+    const senhaCorreta = obterSenhaAtual();
+    
+    // Debug detalhado
+    console.log('=== DEBUG SENHA ===');
+    console.log('Senha digitada:', `"${senhaDigitada}"`);
+    console.log('Senha esperada:', `"${senhaCorreta}"`);
+    console.log('Tipos:', typeof senhaDigitada, typeof senhaCorreta);
+    console.log('Iguais?:', senhaDigitada === senhaCorreta);
+    console.log('==================');
+    
+    // Comparação simples e direta
+    if (senhaDigitada === senhaCorreta) {
       modoADM = true;
       document.getElementById('adminPanel').classList.add('active');
       botao.textContent = 'Sair do Modo ADM';
-    } else if (senha !== null) { // só mostra erro se não cancelou
-      alert('Senha incorreta!');
+      alert('Acesso liberado ao modo ADM!');
+    } else {
+      alert(`Senha incorreta!\nVocê digitou: "${senhaDigitada}"\nSenha esperada: "${senhaCorreta}"`);
     }
   } else {
     // Saindo do modo ADM
     modoADM = false;
     document.getElementById('adminPanel').classList.remove('active');
     document.getElementById('relatorioBox').classList.remove('active');
-    botao.textContent = 'Entrar no Modo ADM';
+    botao.textContent = 'ADM';
   }
 }
 
@@ -569,24 +674,45 @@ function limparAvaliacoes() {
 }
 
 function alterarSenhaADM() {
-  const novaSenha = document.getElementById('novaSenha').value.trim();
-  if (!novaSenha) return alert("Digite uma nova senha válida.");
-  senhaADM = novaSenha;
-  localStorage.setItem('senhaADM', senhaADM);
-  alert("Senha alterada com sucesso!");
+  const novaSenha = document.getElementById('novaSenha').value;
+  if (!novaSenha) {
+    alert("Digite uma nova senha válida.");
+    return;
+  }
+  
+  // Salvar no localStorage
+  localStorage.setItem('senhaADM', novaSenha);
+  
+  alert(`Senha alterada com sucesso!\nNova senha: "${novaSenha}"`);
+  console.log('Nova senha salva:', novaSenha);
   document.getElementById('novaSenha').value = '';
 }
 
 // Função para resetar senha (para debug/emergência)
 function resetarSenha() {
   localStorage.removeItem('senhaADM');
-  senhaADM = 'admin123';
-  alert('Senha resetada para: admin123');
+  alert('Senha resetada para: 1234');
+  console.log('Senha resetada para padrão: 1234');
 }
 
 // Para debug - você pode chamar no console do navegador se necessário
 window.resetarSenha = resetarSenha;
-window.verificarSenha = () => console.log('Senha atual:', senhaADM);
+window.verificarSenha = () => {
+  const senhaAtual = obterSenhaAtual();
+  console.log('Senha atual:', `"${senhaAtual}"`);
+  alert(`Senha atual: "${senhaAtual}"`);
+  return senhaAtual;
+};
+window.limparSenha = () => {
+  localStorage.removeItem('senhaADM');
+  console.log('Senha removida do localStorage. Senha padrão: 1234');
+  alert('Senha removida! Agora a senha é: 1234');
+};
+window.definirSenha = (novaSenha) => {
+  localStorage.setItem('senhaADM', novaSenha);
+  console.log('Senha definida para:', novaSenha);
+  alert(`Senha definida para: "${novaSenha}"`);
+};
 
 // Inicialização
 renderizarFuncionarias();
