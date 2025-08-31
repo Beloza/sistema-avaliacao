@@ -427,9 +427,18 @@ button:hover {
     <select id="listaExclusao"></select>
     <button onclick="excluirFuncionaria()">Excluir Selecionada</button>
 
+    <h3>Editar Funcionária</h3>
+    <select id="listaEdicao"></select>
+    <button onclick="abrirModalEdicao()">Editar Selecionada</button>
+
     <h3>Alterar Senha ADM</h3>
     <input type="password" id="novaSenha" placeholder="Nova Senha" />
     <button onclick="alterarSenhaADM()">Alterar Senha</button>
+
+    <h3>Backup e Restauração</h3>
+    <button onclick="fazerBackup()">Fazer Backup dos Dados</button>
+    <input type="file" id="arquivoRestauro" accept=".json" style="margin-top: 10px;" />
+    <button onclick="restaurarBackup()">Restaurar Backup</button>
 
     <h3>Relatório</h3>
     <button onclick="gerarRelatorio()">Gerar Relatório</button>
@@ -437,6 +446,19 @@ button:hover {
     <button onclick="limparAvaliacoes()">Limpar Todas as Avaliações</button>
     <div class="report-box" id="relatorioBox">
       <pre id="relatorioTexto"></pre>
+    </div>
+  </div>
+
+  <!-- Modal de Edição -->
+  <div id="modalEdicao" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background-color: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+      <h3 style="margin-bottom: 20px; text-align: center; color: #2c3e50;">Editar Funcionária</h3>
+      <input type="text" id="nomeEdicao" placeholder="Nome da Funcionária" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px;" />
+      <input type="file" id="fotoEdicao" accept="image/*" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px;" />
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button onclick="salvarEdicao()" style="padding: 10px 20px; background-color: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer;">Salvar</button>
+        <button onclick="fecharModalEdicao()" style="padding: 10px 20px; background-color: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>
+      </div>
     </div>
   </div>
 
@@ -576,28 +598,15 @@ function alternarModoADM() {
     // Tentando entrar no modo ADM
     const senhaDigitada = prompt('Digite a senha do modo ADM:');
     
-    if (senhaDigitada === null) {
-      return; // Usuário cancelou
-    }
-    
-    const senhaCorreta = obterSenhaAtual();
-    
-    // Debug detalhado
-    console.log('=== DEBUG SENHA ===');
-    console.log('Senha digitada:', `"${senhaDigitada}"`);
-    console.log('Senha esperada:', `"${senhaCorreta}"`);
-    console.log('Tipos:', typeof senhaDigitada, typeof senhaCorreta);
-    console.log('Iguais?:', senhaDigitada === senhaCorreta);
-    console.log('==================');
-    
-    // Comparação simples e direta
-    if (senhaDigitada === senhaCorreta) {
+    if (senhaDigitada === obterSenhaAtual()) {
       modoADM = true;
       document.getElementById('adminPanel').classList.add('active');
-      botao.textContent = 'Sair do Modo ADM';
-      alert('Acesso liberado ao modo ADM!');
+      botao.textContent = 'SAIR ADM';
+      botao.style.backgroundColor = '#e74c3c';
+      deselecionarFuncionaria(); // Garante que nenhuma funcionária esteja selecionada
+      atualizarListaEdicao();
     } else {
-      alert(`Senha incorreta!\nVocê digitou: "${senhaDigitada}"\nSenha esperada: "${senhaCorreta}"`);
+      alert('Senha incorreta!');
     }
   } else {
     // Saindo do modo ADM
@@ -605,12 +614,14 @@ function alternarModoADM() {
     document.getElementById('adminPanel').classList.remove('active');
     document.getElementById('relatorioBox').classList.remove('active');
     botao.textContent = 'ADM';
+    botao.style.backgroundColor = '#34495e';
   }
 }
 
 function adicionarFuncionaria() {
   const nome = document.getElementById('nomeNova').value.trim();
   const fotoInput = document.getElementById('fotoNova');
+  
   if (!nome || !fotoInput.files[0]) {
     alert('Nome e foto são obrigatórios!');
     return;
@@ -623,6 +634,7 @@ function adicionarFuncionaria() {
     renderizarFuncionarias();
     document.getElementById('nomeNova').value = '';
     fotoInput.value = '';
+    alert('Funcionária adicionada com sucesso!');
   };
   reader.readAsDataURL(fotoInput.files[0]);
 }
@@ -630,18 +642,24 @@ function adicionarFuncionaria() {
 function excluirFuncionaria() {
   const select = document.getElementById('listaExclusao');
   const nomeSelecionado = select.value;
-  if (!nomeSelecionado) return;
+  
+  if (!nomeSelecionado) {
+    alert('Selecione uma funcionária para excluir.');
+    return;
+  }
+  
   if (!confirm(`Tem certeza que deseja excluir ${nomeSelecionado}?`)) return;
 
   funcionarias = funcionarias.filter(f => f.nome !== nomeSelecionado);
   delete avaliacoes[nomeSelecionado];
   salvarDados();
   renderizarFuncionarias();
+  alert('Funcionária excluída com sucesso!');
 }
 
 function atualizarListaExclusao() {
   const select = document.getElementById('listaExclusao');
-  select.innerHTML = '';
+  select.innerHTML = '<option value="">Selecione uma funcionária</option>';
   funcionarias.forEach(f => {
     const option = document.createElement('option');
     option.value = f.nome;
@@ -650,110 +668,292 @@ function atualizarListaExclusao() {
   });
 }
 
+function atualizarListaEdicao() {
+  const select = document.getElementById('listaEdicao');
+  select.innerHTML = '<option value="">Selecione uma funcionária</option>';
+  funcionarias.forEach(f => {
+    const option = document.createElement('option');
+    option.value = f.nome;
+    option.textContent = f.nome;
+    select.appendChild(option);
+  });
+}
+
+let funcionariaEditandoIndex = -1;
+
+function abrirModalEdicao() {
+  const select = document.getElementById('listaEdicao');
+  const nomeSelecionado = select.value;
+  
+  if (!nomeSelecionado) {
+    alert('Selecione uma funcionária para editar.');
+    return;
+  }
+  
+  funcionariaEditandoIndex = funcionarias.findIndex(f => f.nome === nomeSelecionado);
+  if (funcionariaEditandoIndex === -1) return;
+  
+  const funcionaria = funcionarias[funcionariaEditandoIndex];
+  document.getElementById('nomeEdicao').value = funcionaria.nome;
+  document.getElementById('modalEdicao').style.display = 'flex';
+}
+
+function fecharModalEdicao() {
+  document.getElementById('modalEdicao').style.display = 'none';
+  document.getElementById('nomeEdicao').value = '';
+  document.getElementById('fotoEdicao').value = '';
+  funcionariaEditandoIndex = -1;
+}
+
+function salvarEdicao() {
+  if (funcionariaEditandoIndex === -1) return;
+  
+  const novoNome = document.getElementById('nomeEdicao').value.trim();
+  const fotoInput = document.getElementById('fotoEdicao');
+  
+  if (!novoNome) {
+    alert('Nome é obrigatório!');
+    return;
+  }
+  
+  const funcionaria = funcionarias[funcionariaEditandoIndex];
+  const nomeAntigo = funcionaria.nome;
+  
+  // Atualizar nome
+  funcionaria.nome = novoNome;
+  
+  // Atualizar foto se uma nova foi selecionada
+  if (fotoInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      funcionaria.foto = reader.result;
+      finalizarEdicao(nomeAntigo, novoNome);
+    };
+    reader.readAsDataURL(fotoInput.files[0]);
+  } else {
+    finalizarEdicao(nomeAntigo, novoNome);
+  }
+}
+
+function finalizarEdicao(nomeAntigo, novoNome) {
+  // Atualizar avaliações se o nome mudou
+  if (nomeAntigo !== novoNome && avaliacoes[nomeAntigo]) {
+    avaliacoes[novoNome] = avaliacoes[nomeAntigo];
+    delete avaliacoes[nomeAntigo];
+  }
+  
+  salvarDados();
+  renderizarFuncionarias();
+  fecharModalEdicao();
+  alert('Funcionária editada com sucesso!');
+}
+
 function gerarRelatorio() {
-  const relatorio = Object.entries(avaliacoes).map(([nome, lista]) => {
-    const contagem = { Boa: 0, Neutra: 0, Ruim: 0 };
-    lista.forEach(v => contagem[v]++);
-    return `${nome}:\n  😊 Boas: ${contagem.Boa}\n  😐 Neutras: ${contagem.Neutra}\n  😞 Ruins: ${contagem.Ruim}\n`;
-  }).join('\n') || 'Nenhuma avaliação registrada.';
+  let relatorio = 'RELATÓRIO DE AVALIAÇÕES\n';
+  relatorio += '========================\n\n';
+  
+  if (Object.keys(avaliacoes).length === 0) {
+    relatorio += 'Nenhuma avaliação registrada.';
+  } else {
+    Object.entries(avaliacoes).forEach(([nome, lista]) => {
+      const contagem = { Boa: 0, Neutra: 0, Ruim: 0 };
+      lista.forEach(v => contagem[v]++);
+      const total = lista.length;
+      
+      relatorio += `${nome}:\n`;
+      relatorio += `  😊 Excelentes: ${contagem.Boa} (${((contagem.Boa/total)*100).toFixed(1)}%)\n`;
+      relatorio += `  😐 Boas: ${contagem.Neutra} (${((contagem.Neutra/total)*100).toFixed(1)}%)\n`;
+      relatorio += `  😞 Ruins: ${contagem.Ruim} (${((contagem.Ruim/total)*100).toFixed(1)}%)\n`;
+      relatorio += `  Total de avaliações: ${total}\n\n`;
+    });
+  }
 
   document.getElementById('relatorioTexto').textContent = relatorio;
   document.getElementById('relatorioBox').classList.add('active');
 }
 
 function exportarXML() {
-  let xmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n<avaliacoes>\n';
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<sistema_avaliacao>\n';
+  xml += '  <funcionarias>\n';
   
-  // Para cada funcionária, criar um registro
-  funcionarias.forEach(funcionaria => {
-    const nome = funcionaria.nome;
-    const avaliacoesFuncionaria = avaliacoes[nome] || [];
-    
-    xmlContent += `  <funcionaria>\n`;
-    xmlContent += `    <nome>${nome}</nome>\n`;
-    
-    // Adicionar cada avaliação como um elemento separado
-    avaliacoesFuncionaria.forEach((avaliacao, index) => {
-      xmlContent += `    <avaliacao${index + 1}>${avaliacao}</avaliacao${index + 1}>\n`;
-    });
-    
-    // Adicionar contagem total de cada tipo
-    const contagem = { Boa: 0, Neutra: 0, Ruim: 0 };
-    avaliacoesFuncionaria.forEach(v => contagem[v]++);
-    
-    xmlContent += `    <total_boas>${contagem.Boa}</total_boas>\n`;
-    xmlContent += `    <total_neutras>${contagem.Neutra}</total_neutras>\n`;
-    xmlContent += `    <total_ruins>${contagem.Ruim}</total_ruins>\n`;
-    xmlContent += `    <total_avaliacoes>${avaliacoesFuncionaria.length}</total_avaliacoes>\n`;
-    xmlContent += `  </funcionaria>\n`;
+  funcionarias.forEach(f => {
+    xml += `    <funcionaria>\n`;
+    xml += `      <nome>${f.nome}</nome>\n`;
+    xml += `      <foto>${f.foto}</foto>\n`;
+    xml += `    </funcionaria>\n`;
   });
   
-  xmlContent += '</avaliacoes>';
+  xml += '  </funcionarias>\n';
+  xml += '  <avaliacoes>\n';
   
-  // Criar e baixar o arquivo
-  const blob = new Blob([xmlContent], { type: 'application/xml' });
+  Object.entries(avaliacoes).forEach(([nome, lista]) => {
+    xml += `    <funcionaria_avaliacoes nome="${nome}">\n`;
+    lista.forEach(avaliacao => {
+      xml += `      <avaliacao>${avaliacao}</avaliacao>\n`;
+    });
+    xml += `    </funcionaria_avaliacoes>\n`;
+  });
+  
+  xml += '  </avaliacoes>\n';
+  xml += '</sistema_avaliacao>';
+
+  const blob = new Blob([xml], { type: 'application/xml' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `avaliacoes_funcionarias_${new Date().toISOString().split('T')[0]}.xml`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `sistema_avaliacao_${new Date().toISOString().split('T')[0]}.xml`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
   URL.revokeObjectURL(url);
   
-  alert('Arquivo XML exportado com sucesso!');
+  alert('XML exportado com sucesso!');
 }
 
 function limparAvaliacoes() {
   if (!confirm("Deseja realmente limpar TODAS as avaliações?")) return;
   avaliacoes = {};
   salvarDados();
-  gerarRelatorio();
+  alert('Todas as avaliações foram removidas.');
+  if (document.getElementById('relatorioBox').classList.contains('active')) {
+    gerarRelatorio();
+  }
 }
 
 function alterarSenhaADM() {
-  const novaSenha = document.getElementById('novaSenha').value;
+  const novaSenha = document.getElementById('novaSenha').value.trim();
   if (!novaSenha) {
     alert("Digite uma nova senha válida.");
     return;
   }
-  
-  // Salvar no localStorage
   localStorage.setItem('senhaADM', novaSenha);
-  
-  alert(`Senha alterada com sucesso!\nNova senha: "${novaSenha}"`);
-  console.log('Nova senha salva:', novaSenha);
+  alert("Senha alterada com sucesso!");
   document.getElementById('novaSenha').value = '';
 }
 
-// Função para resetar senha (para debug/emergência)
-function resetarSenha() {
-  localStorage.removeItem('senhaADM');
-  alert('Senha resetada para: 1234');
-  console.log('Senha resetada para padrão: 1234');
+// Funções de Backup e Restauração
+function fazerBackup() {
+  try {
+    // Criar objeto com todos os dados do sistema
+    const dadosBackup = {
+      funcionarias: funcionarias,
+      avaliacoes: avaliacoes,
+      senhaADM: localStorage.getItem('senhaADM') || '1234',
+      dataBackup: new Date().toISOString(),
+      versao: '1.8'
+    };
+
+    // Converter para JSON
+    const jsonString = JSON.stringify(dadosBackup, null, 2);
+    
+    // Criar blob e fazer download
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    // Criar link temporário para download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `backup_sistema_avaliacao_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Limpar URL temporária
+    URL.revokeObjectURL(url);
+    
+    alert('Backup realizado com sucesso! O arquivo foi baixado.');
+  } catch (error) {
+    console.error('Erro ao fazer backup:', error);
+    alert('Erro ao fazer backup. Verifique o console para mais detalhes.');
+  }
 }
 
-// Para debug - você pode chamar no console do navegador se necessário
-window.resetarSenha = resetarSenha;
-window.verificarSenha = () => {
-  const senhaAtual = obterSenhaAtual();
-  console.log('Senha atual:', `"${senhaAtual}"`);
-  alert(`Senha atual: "${senhaAtual}"`);
-  return senhaAtual;
-};
-window.limparSenha = () => {
-  localStorage.removeItem('senhaADM');
-  console.log('Senha removida do localStorage. Senha padrão: 1234');
-  alert('Senha removida! Agora a senha é: 1234');
-};
-window.definirSenha = (novaSenha) => {
-  localStorage.setItem('senhaADM', novaSenha);
-  console.log('Senha definida para:', novaSenha);
-  alert(`Senha definida para: "${novaSenha}"`);
-};
+function restaurarBackup() {
+  const arquivoInput = document.getElementById('arquivoRestauro');
+  const arquivo = arquivoInput.files[0];
+  
+  if (!arquivo) {
+    alert('Por favor, selecione um arquivo de backup.');
+    return;
+  }
+  
+  if (!arquivo.name.endsWith('.json')) {
+    alert('Por favor, selecione um arquivo JSON válido.');
+    return;
+  }
+  
+  // Confirmar restauração
+  if (!confirm('ATENÇÃO: Esta ação irá substituir todos os dados atuais do sistema. Deseja continuar?')) {
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const dadosBackup = JSON.parse(e.target.result);
+      
+      // Validar estrutura do backup
+      if (!dadosBackup.funcionarias || !dadosBackup.avaliacoes) {
+        throw new Error('Arquivo de backup inválido: estrutura incorreta.');
+      }
+      
+      // Validar se as funcionárias têm a estrutura correta
+      if (!Array.isArray(dadosBackup.funcionarias)) {
+        throw new Error('Arquivo de backup inválido: dados de funcionárias corrompidos.');
+      }
+      
+      for (let funcionaria of dadosBackup.funcionarias) {
+        if (!funcionaria.nome || !funcionaria.foto) {
+          throw new Error('Arquivo de backup inválido: dados de funcionária incompletos.');
+        }
+      }
+      
+      // Validar avaliações
+      if (typeof dadosBackup.avaliacoes !== 'object') {
+        throw new Error('Arquivo de backup inválido: dados de avaliações corrompidos.');
+      }
+      
+      // Restaurar dados
+      funcionarias = dadosBackup.funcionarias;
+      avaliacoes = dadosBackup.avaliacoes;
+      
+      // Restaurar senha ADM se existir no backup
+      if (dadosBackup.senhaADM) {
+        localStorage.setItem('senhaADM', dadosBackup.senhaADM);
+      }
+      
+      // Salvar no localStorage
+      salvarDados();
+      
+      // Atualizar interface
+      renderizarFuncionarias();
+      
+      // Limpar input de arquivo
+      arquivoInput.value = '';
+      
+      // Mostrar informações do backup restaurado
+      const dataBackup = dadosBackup.dataBackup ? new Date(dadosBackup.dataBackup).toLocaleString('pt-BR') : 'Não informada';
+      const versaoBackup = dadosBackup.versao || 'Não informada';
+      
+      alert(`Backup restaurado com sucesso!\n\nDetalhes do backup:\n- Data: ${dataBackup}\n- Versão: ${versaoBackup}\n- Funcionárias: ${funcionarias.length}\n- Total de avaliações: ${Object.values(avaliacoes).reduce((total, lista) => total + lista.length, 0)}`);
+      
+    } catch (error) {
+      console.error('Erro ao restaurar backup:', error);
+      alert(`Erro ao restaurar backup: ${error.message}`);
+    }
+  };
+  
+  reader.onerror = function() {
+    alert('Erro ao ler o arquivo de backup.');
+  };
+  
+  reader.readAsText(arquivo);
+}
 
 // Inicialização
 renderizarFuncionarias();
   </script>
 </body>
 </html>
+
